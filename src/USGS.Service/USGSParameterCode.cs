@@ -7,6 +7,10 @@ namespace Tudormobile.USGS.Service;
 /// </summary>
 public sealed class USGSParameterCode
 {
+    /// <summary>Represents a 'missing' code.</summary>
+
+    public static readonly USGSParameterCode Missing = new("0000", "[No Parameter Code Provided]");
+
     /// <summary>Depth to water level, feet below land surface</summary>
     public static readonly USGSParameterCode WaterLevel = new("72019", "Depth to water level, feet below land surface");
 

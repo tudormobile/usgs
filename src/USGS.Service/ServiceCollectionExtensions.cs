@@ -28,6 +28,12 @@ public static class ServiceCollectionExtensions
             client.DefaultRequestHeaders.Add(API_KEY_NAME, options.ApiKey);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+
+            // Add any additional headers from configuration
+            foreach (var header in options.AdditionalHeaders)
+            {
+                client.DefaultRequestHeaders.Add(header.Key, header.Value);
+            }
         })
         .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
@@ -41,7 +47,7 @@ public static class ServiceCollectionExtensions
             var factory = sp.GetRequiredService<IHttpClientFactory>();
             var httpClient = factory.CreateClient(nameof(IUSGSClient));
             var logger = sp.GetService<ILogger<USGSClient>>();
-            return new USGSClient(options.ApiKey, httpClient, logger);
+            return new USGSClient(options, httpClient, logger);
         });
 
         return services;

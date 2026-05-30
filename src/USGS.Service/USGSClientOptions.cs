@@ -32,4 +32,10 @@ public class USGSClientOptions
     /// </summary>
     public int TimeoutSeconds { get; set; } = 30;
 
+    /// <summary>
+    /// Optional additional headers to include in all API requests.
+    /// The key is the header name, and the value is the header value.
+    /// </summary>
+    public Dictionary<string, string> AdditionalHeaders { get; set; } = new();
+
 }

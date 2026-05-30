@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using System.Web;
 using Tudormobile.GeoJSON;
 
@@ -7,18 +8,18 @@ namespace Tudormobile.USGS.Service;
 /// <inheritdoc/>
 internal class USGSClient : IUSGSClient
 {
-    private readonly string _apiKey;
+    private readonly USGSClientOptions _options;
     private readonly ILogger _logger;
     private readonly HttpClient _httpClient;
 
     /// <inheritdoc/>
-    public USGSClient(string apiKey, HttpClient httpClient, ILogger? logger = null)
+    public USGSClient(USGSClientOptions options, HttpClient httpClient, ILogger? logger = null)
     {
-        if (string.IsNullOrWhiteSpace(apiKey))
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+        if (string.IsNullOrWhiteSpace(_options.ApiKey))
         {
-            throw new ArgumentException("API key cannot be null or empty.", nameof(apiKey));
+            throw new ArgumentException("API key cannot be null or empty.", nameof(options));
         }
-        _apiKey = apiKey;
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _logger.LogDebug("USGSClient initialized.");
@@ -45,11 +46,29 @@ internal class USGSClient : IUSGSClient
             query["monitoring_location_id"] = result.MonitoringLocation;
             query["f"] = "json";
             query["datetime"] = $"{start}/{end}";
-            query["limit"] = limit?.ToString() ?? "1000";
+            query["limit"] = limit?.ToString() ?? _options.MaxItems.ToString();
 
-            using var response = await _httpClient.GetStreamAsync($"{result.UrlUsed}?{query}", cancellationToken);
+            var response = await _httpClient.GetAsync($"{result.UrlUsed}?{query}", cancellationToken);
 
-            var doc = await GeoJSONDocument.ParseAsync(response);
+            // Check HTTP status code
+            if (!response.IsSuccessStatusCode)
+            {
+                result.IsSuccess = false;
+                result.ErrorMessage = $"HTTP {(int)response.StatusCode}: {response.ReasonPhrase}";
+
+                result.ErrorKind = response.StatusCode switch
+                {
+                    System.Net.HttpStatusCode.Unauthorized => USGSErrorKind.Unauthorized,
+                    System.Net.HttpStatusCode.NotFound => USGSErrorKind.NotFound,
+                    _ => USGSErrorKind.Network
+                };
+
+                _logger.LogError("USGS API request failed with status code {StatusCode}: {ReasonPhrase}", response.StatusCode, response.ReasonPhrase);
+                return result;
+            }
+
+            using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            var doc = await GeoJSONDocument.ParseAsync(stream);
 
             result.IsSuccess = true;
             if (DateTime.TryParse(doc.Objects["timeStamp"]?.ToString(), out var timestamp))
@@ -72,12 +91,26 @@ internal class USGSClient : IUSGSClient
                 });
             }
         }
+        catch (HttpRequestException ex)
+        {
+            result.ErrorMessage = ex.Message;
+            result.IsSuccess = false;
+            result.ErrorKind = USGSErrorKind.Network;
+            _logger.LogError(ex, "Network error occurred while calling USGS API.");
+        }
+        catch (JsonException ex)
+        {
+            result.ErrorMessage = ex.Message;
+            result.IsSuccess = false;
+            result.ErrorKind = USGSErrorKind.ParseError;
+            _logger.LogError(ex, "Error parsing JSON response from USGS API.");
+        }
         catch (Exception ex)
         {
             result.ErrorMessage = ex.Message;
             result.IsSuccess = false;
-            result.ErrorKind = USGSErrorKind.QueryConstructionError;
-            _logger.LogError(ex, "Error constructing query parameters for USGS API.");
+            result.ErrorKind = USGSErrorKind.Unknown;
+            _logger.LogError(ex, "Unexpected error occurred while calling USGS API.");
         }
 
         return result;
