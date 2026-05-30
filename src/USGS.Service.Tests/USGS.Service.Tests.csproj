@@ -1,0 +1,17 @@
+﻿<Project Sdk="MSTest.Sdk/4.2.2">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" Version="10.6.0" />
+    <ProjectReference Include="..\USGS.Service\USGS.Service.csproj" />
+    <Using Include="System.Globalization" />
+    <Using Include="Microsoft.AspNetCore.Http" />
+    <Using Include="Microsoft.AspNetCore.Hosting" />
+    <Using Include="Microsoft.Extensions.Logging" />
+    <Using Include="Tudormobile.USGS.Service" />
+  </ItemGroup>
+</Project>

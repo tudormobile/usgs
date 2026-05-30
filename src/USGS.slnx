@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="USGS.Service.Tests/USGS.Service.Tests.csproj" Id="8408f6b1-3b5c-437d-8494-cb6771cbd6d9" />
+  <Project Path="USGS.Service/USGS.Service.csproj" Id="050d1e57-623f-4c07-82ff-a57c7d0bd269" />
+</Solution>
