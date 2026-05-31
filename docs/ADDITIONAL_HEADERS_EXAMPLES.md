@@ -156,7 +156,7 @@ var result = await client.GetDailyItemsAsync("12345678", USGSParameterCode.Tempe
 
 ## Best Practices
 
-1. **Don't duplicate the API key**: The `x-api-key` header is automatically added from the `ApiKey` property. Don't add it again in `AdditionalHeaders`.
+1. **Don't duplicate the API key**: When using `AddUSGSClient` (DI), the `x-api-key` header is added from the `ApiKey` option. Don’t add it again in `AdditionalHeaders` (and for direct instantiation, add `x-api-key` to the provided `HttpClient`).
 
 2. **Use meaningful header names**: Prefix custom headers with `X-` to indicate they're extension headers.
 
