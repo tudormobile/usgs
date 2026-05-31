@@ -36,6 +36,8 @@ namespace SimpleConsoleApp
 
             var json = await client.GetStringAsync(uri);
 
+            Console.WriteLine(json);
+
             using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
             var doc = await GeoJSONDocument.ParseAsync(stream);
             Console.WriteLine($"Found {doc.Objects["numberReturned"]} items");
