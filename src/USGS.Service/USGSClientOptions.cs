@@ -10,7 +10,7 @@ public class USGSClientOptions
     /// <summary>
     /// The configuration section name to bind from.
     /// </summary>
-    public const string SectionName = "USGSClient";
+    public const string SectionName = "USGSService:USGSClient";
 
     /// <summary>
     /// The USGS API key.

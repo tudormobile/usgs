@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -9,6 +12,41 @@ namespace Tudormobile.USGS.Service;
 public static class ServiceCollectionExtensions
 {
     private readonly static string API_KEY_NAME = "x-api-key";
+
+    /// <summary>
+    /// Adds the USGS service to the application builder, enabling middleware for handling USGS-related requests.
+    /// </summary>
+    /// <param name="app">The web application used to configure the HTTP pipeline.</param>
+    /// <returns>The web application configured with USGS services.</returns>
+    public static WebApplication UseUSGSService(this WebApplication app)
+    {
+        var prefix = "/usgs/v1";
+
+        // Obtain the configured client to use for handling requests
+        var usgsClient = app.Services.GetRequiredService<IUSGSClient>();
+
+        // Configure the service using the Service configuration section
+        var section = app.Configuration.GetSection("USGSService");
+        var serviceApiKey = section.GetValue<string>("ApiKey") ?? string.Empty;
+        var serviceRoot = section.GetValue<string>("ServiceRoot")?.TrimEnd('/') ?? string.Empty;
+
+        var api = new USGSApi(
+            serviceApiKey,
+            usgsClient,
+            app.Logger,
+            app.Environment);
+
+        // Map USGS endpoints
+        app.UseOutputCache();
+
+        app.MapGet($"{serviceRoot}{prefix}/status", (HttpContext context, [FromHeader(Name = "ApiKey")] string? apiKey)
+            => api.GetVersionAsync(context, apiKey ?? string.Empty)).CacheOutput(p => p.Expire(TimeSpan.FromMinutes(15)));
+
+        app.MapGet($"{serviceRoot}{prefix}/{{location}}/{{parameter}}/daily", (HttpContext context, [FromHeader(Name = "ApiKey")] string? apiKey, string location, string parameter, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+            => api.GetDailyValues(context, apiKey ?? string.Empty, location, parameter, startDate, endDate)).CacheOutput(p => p.Expire(TimeSpan.FromMinutes(15)));
+
+        return app;
+    }
 
     /// <summary>
     /// Adds the USGS client to the service collection, binding configuration from
@@ -49,10 +87,11 @@ public static class ServiceCollectionExtensions
         {
             var factory = sp.GetRequiredService<IHttpClientFactory>();
             var httpClient = factory.CreateClient(nameof(IUSGSClient));
-            var logger = sp.GetService<ILogger<USGSClient>>();
+            var logger = sp.GetService<ILogger<IUSGSClient>>();
             return new USGSClient(options, httpClient, logger);
         });
 
+        services.AddOutputCache();
         return services;
     }
 }
