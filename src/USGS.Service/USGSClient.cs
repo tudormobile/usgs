@@ -48,7 +48,7 @@ internal class USGSClient : IUSGSClient
             query["datetime"] = $"{start}/{end}";
             query["limit"] = limit?.ToString() ?? _options.MaxItems.ToString();
 
-            var response = await _httpClient.GetAsync($"{result.UrlUsed}?{query}", cancellationToken);
+            using var response = await _httpClient.GetAsync($"{result.UrlUsed}?{query}", HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
             // Check HTTP status code
             if (!response.IsSuccessStatusCode)
