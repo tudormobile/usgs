@@ -32,7 +32,10 @@ public static class ServiceCollectionExtensions
             // Add any additional headers from configuration
             foreach (var header in options.AdditionalHeaders)
             {
-                client.DefaultRequestHeaders.Add(header.Key, header.Value);
+                if (string.IsNullOrWhiteSpace(header.Key) || client.DefaultRequestHeaders.Contains(header.Key))
+                    continue;
+
+                client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
             }
         })
         .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
