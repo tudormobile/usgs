@@ -62,7 +62,7 @@ public class USGSApi
             catch (Exception ex)
             {
                 LogException(context, ex, callerName);
-                return Results.Ok(ApiResponse.Failure(ex.Message));
+                return Results.Ok(ApiResponse.Failure(_env.IsDevelopment() ? ex.Message : "An unexpected error occurred."));
             }
         }
         var redactedKey = apiKey.Length > 4 ? $"{apiKey[..4]}..." : "???";
