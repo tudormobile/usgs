@@ -55,8 +55,7 @@ public class USGSApi
     private async Task<IResult> HandleApiRequest(HttpContext context, string apiKey, string callerName, Func<Task<IResult>> onAuthorized)
     {
         LogApiRequest(context, callerName);
-        if (_env.IsDevelopment() || apiKey == _apiKey)
-        {
+        if (_env.IsDevelopment() || (!string.IsNullOrWhiteSpace(_apiKey) && apiKey == _apiKey))
             try
             {
                 return await onAuthorized();
