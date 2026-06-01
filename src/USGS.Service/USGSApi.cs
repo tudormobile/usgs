@@ -55,6 +55,7 @@ public class USGSApi
     {
         LogApiRequest(context, callerName);
         if (_env.IsDevelopment() || (!string.IsNullOrWhiteSpace(_apiKey) && apiKey == _apiKey))
+        {
             try
             {
                 return await onAuthorized();
@@ -65,7 +66,7 @@ public class USGSApi
                 return Results.Ok(ApiResponse.Failure(_env.IsDevelopment() ? ex.Message : "An unexpected error occurred."));
             }
         }
-        var redactedKey = apiKey.Length > 4 ? $"{apiKey[..4]}..." : "???";
+        var redactedKey = string.IsNullOrEmpty(apiKey) ? "???" : apiKey.Length > 4 ? $"{apiKey[..4]}..." : "???";
         _logger.LogError("USGSService, {CallerName}, {RemoteIpAddress}, {ApiKey}, INVALID API KEY", callerName, context.Connection.RemoteIpAddress, redactedKey);
         return Results.Unauthorized();
     }

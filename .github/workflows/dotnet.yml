@@ -1,0 +1,189 @@
+name: Build and Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/dotnet.yml'
+      - 'GitVersion.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/dotnet.yml'
+      - 'GitVersion.yml'
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  ci:
+    name: Build and Test Library
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.x'
+          source-url: https://nuget.pkg.github.com/tudormobile/index.json
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup GitVersion
+        uses: gittools/actions/gitversion/setup@v4
+        with:
+          versionSpec: '6.4.0'
+
+      - name: Determine Version
+        id: version_step
+        uses: gittools/actions/gitversion/execute@v4
+        with:
+          updateProjectFiles: true
+
+      - name: Unit tests
+        run: |
+          cd src
+          dotnet test --filter "TestCategory!=Integration" --coverage --report-trx
+
+      - name: Unit Test Annotations
+        run: |
+          cd src
+          if dotnet tool list -g | grep -q 'dotnet-coverage'; then
+            dotnet tool update -g dotnet-coverage --version 18.1.0
+          else
+            dotnet tool install -g dotnet-coverage --version 18.1.0
+          fi
+          if dotnet tool list -g | grep -q 'dotnet-reportgenerator-globaltool'; then
+            dotnet tool update -g dotnet-reportgenerator-globaltool --version 5.4.3
+          else
+            dotnet tool install -g dotnet-reportgenerator-globaltool --version 5.4.3
+          fi
+          shopt -s globstar
+          dotnet-coverage merge **/*.coverage --remove-input-files --output-format xml --output output.xml
+          reportgenerator -reports:"output.xml" -targetdir:"output" -reporttypes:"MarkdownSummaryGithub"
+          echo "### Test Results" >> "$GITHUB_STEP_SUMMARY"
+          find . -name "*.trx" | while read trx; do
+            grep -oP 'executed="\d+" passed="\d+" failed="\d+"' "$trx" | while read line; do
+              executed=$(echo "$line" | grep -oP 'executed="\K\d+')
+              passed=$(echo "$line" | grep -oP 'passed="\K\d+')
+              failed=$(echo "$line" | grep -oP 'failed="\K\d+')
+              echo ":purple_circle: Tests: $executed :green_circle: Passed: $passed :red_circle: Failed: $failed"
+            done
+          done >> "$GITHUB_STEP_SUMMARY"
+          echo "### Code Coverage" >> "$GITHUB_STEP_SUMMARY"
+          grep -oP '<summary>\K.+%(?=</summary>)' output/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build
+        run: |
+          cd src
+          dotnet build -c Release
+
+      - name: Publish
+        run: |
+          cd src
+          dotnet publish USGS.Service/USGS.Service.csproj -c Release -o publish -p:UseAppHost=false
+          echo "## USGS.Service publish Version: ${{ steps.version_step.outputs.semVer }}"
+          echo "${{ steps.version_step.outputs.semVer }}" > publish/ver.txt
+
+#      - name: Upload Packages
+#        uses: actions/upload-artifact@v7
+#        with:
+#          name: package
+#          path: src/**/bin/Release/*.nupkg
+
+      - name: Create Zip for Release
+        run: |
+          cd src/publish
+          zip -r ../../package.zip .
+
+      - name: Upload Release Zip
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-zip
+          path: package.zip
+
+  release:
+    name: Create Stable Release and Publish Packages
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) }}
+    needs: ci
+    runs-on: ubuntu-latest
+    environment: production-release
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.x'
+          source-url: https://nuget.pkg.github.com/tudormobile/index.json
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup GitVersion
+        uses: gittools/actions/gitversion/setup@v4
+        with:
+          versionSpec: '6.4.0'
+
+      - name: Determine Version
+        id: release_version_step
+        uses: gittools/actions/gitversion/execute@v4
+
+      - name: Resolve Release Tag
+        id: release_tag
+        run: |
+          echo "release_tag=v${{ steps.release_version_step.outputs.semVer }}" >> $GITHUB_OUTPUT
+
+ #     - name: Download Package Artifact
+ #       uses: actions/download-artifact@v8
+ #       with:
+ #         name: package
+ #         path: package
+
+      - name: Download Release Zip Artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: release-zip
+          path: release-zip
+
+      - name: Create or Update Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.release_tag.outputs.release_tag }}
+        run: |
+          ZIP_PATH="$GITHUB_WORKSPACE/release-zip/package.zip"
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            echo "Release exists. Uploading latest package asset."
+            gh release upload "$RELEASE_TAG" "$ZIP_PATH#package" --clobber
+          else
+            echo "Creating release $RELEASE_TAG"
+            gh release create "$RELEASE_TAG" "$ZIP_PATH#package" --title "$RELEASE_TAG" --generate-notes
+          fi
+
+      # - name: Publish NuGet Packages
+      #   run: |
+      #     mapfile -t packages < <(find package -type f -name '*.nupkg' | sort)
+      #     if [ ${#packages[@]} -eq 0 ]; then
+      #       echo "No NuGet packages found under downloaded artifact path package/."
+      #       exit 1
+      #     fi
+
+      #     for package in "${packages[@]}"; do
+      #       dotnet nuget push "$package" --source "https://nuget.pkg.github.com/tudormobile/index.json" --api-key "${{ secrets.GITHUB_TOKEN }}" --skip-duplicate
+      #       dotnet nuget push "$package" --source "https://api.nuget.org/v3/index.json" --api-key "${{ secrets.NUGET_TOKEN }}" --skip-duplicate
+      #     done
+
