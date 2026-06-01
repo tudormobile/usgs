@@ -1,4 +1,4 @@
-# This file hits the TudormobileAPI producion host
+# This file hits the Tudormobile API production host
 @TudormobileApiHost_HostAddress = https://api.tudormobile.com
 @ApiKey = {{$processEnv TUDORMOBILE_USGS_API_KEY}}
 @TudormobileApiKey = {{$processEnv TUDORMOBILE_API_KEY}}
