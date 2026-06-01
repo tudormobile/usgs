@@ -44,7 +44,7 @@ public static class ServiceCollectionExtensions
         app.MapGet($"{serviceRoot}{prefix}/{{location}}/{{parameter}}/daily", (HttpContext context, [FromHeader(Name = "ApiKey")] string? apiKey, string location, string parameter, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
             => api.GetDailyValues(context, apiKey ?? string.Empty, location, parameter, startDate, endDate));
 
-        app.Logger.LogInformation("AirthingsService, Running, {Prefix}", prefix);
+        app.Logger.LogInformation("USGSService, Running, {Prefix}", prefix);
         return app;
     }
 
