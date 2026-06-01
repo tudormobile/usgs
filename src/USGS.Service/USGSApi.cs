@@ -55,6 +55,7 @@ public class USGSApi
     {
         LogApiRequest(context, callerName);
         if (_env.IsDevelopment() || (!string.IsNullOrWhiteSpace(_apiKey) && apiKey == _apiKey))
+        {
             try
             {
                 return await onAuthorized();
