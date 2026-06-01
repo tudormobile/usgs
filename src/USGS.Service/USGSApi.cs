@@ -41,7 +41,6 @@ public class USGSApi
     internal Task<IResult> GetVersionAsync(HttpContext context, string apiKey)
         => HandleApiRequest(context, apiKey, nameof(GetVersionAsync), async () =>
         {
-            var ass = Assembly.GetExecutingAssembly().GetName();
             return Results.Ok(ApiResponse.Success($"USGS Service {_version.Value} (API v1.0)"));
         });
 
