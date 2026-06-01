@@ -37,14 +37,14 @@ public static class ServiceCollectionExtensions
             app.Environment);
 
         // Map USGS endpoints
-        app.UseOutputCache();
 
         app.MapGet($"{serviceRoot}{prefix}/status", (HttpContext context, [FromHeader(Name = "ApiKey")] string? apiKey)
-            => api.GetVersionAsync(context, apiKey ?? string.Empty)).CacheOutput(p => p.Expire(TimeSpan.FromMinutes(15)));
+            => api.GetVersionAsync(context, apiKey ?? string.Empty));
 
         app.MapGet($"{serviceRoot}{prefix}/{{location}}/{{parameter}}/daily", (HttpContext context, [FromHeader(Name = "ApiKey")] string? apiKey, string location, string parameter, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
-            => api.GetDailyValues(context, apiKey ?? string.Empty, location, parameter, startDate, endDate)).CacheOutput(p => p.Expire(TimeSpan.FromMinutes(15)));
+            => api.GetDailyValues(context, apiKey ?? string.Empty, location, parameter, startDate, endDate));
 
+        app.Logger.LogInformation("AirthingsService, Running, {Prefix}", prefix);
         return app;
     }
 
