@@ -1,0 +1,17 @@
+# This file hits the Tudormobile API production host
+@TudormobileApiHost_HostAddress = https://api.tudormobile.com
+@ApiKey = {{$processEnv TUDORMOBILE_USGS_API_KEY}}
+@TudormobileApiKey = {{$processEnv TUDORMOBILE_API_KEY}}
+
+GET {{TudormobileApiHost_HostAddress}}/weather/usgs/v1/status
+Accept: application/json
+ApiKey: {{ApiKey}}
+x-tudormobile-api: {{TudormobileApiKey}}
+
+###
+GET {{TudormobileApiHost_HostAddress}}/weather/usgs/v1/425048073472501/72019/daily?startDate=2024-01-01&endDate=2024-01-31
+Accept: application/json
+ApiKey: {{ApiKey}}
+x-tudormobile-api: {{TudormobileApiKey}}
+
+###
