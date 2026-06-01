@@ -48,12 +48,12 @@ public class USGSClientTests
         // Test empty string
         var ex = Assert.ThrowsExactly<ArgumentException>(() => new USGSClient(new USGSClientOptions { ApiKey = "" }, httpClient));
         Assert.AreEqual("options", ex.ParamName);
-        Assert.IsTrue(ex.Message.Contains("API key"));
+        Assert.Contains("API key", ex.Message);
 
         // Test whitespace string
         ex = Assert.ThrowsExactly<ArgumentException>(() => new USGSClient(new USGSClientOptions { ApiKey = "   " }, httpClient));
         Assert.AreEqual("options", ex.ParamName);
-        Assert.IsTrue(ex.Message.Contains("API key"));
+        Assert.Contains("API key", ex.Message);
     }
 
     [TestMethod]
@@ -258,19 +258,18 @@ public class USGSClientTests
 
         // Assert
         Assert.IsNotNull(response);
-        Assert.IsTrue(response.IsSuccess);
         Assert.AreEqual(USGSErrorKind.None, response.ErrorKind);
         Assert.IsNull(response.ErrorMessage);
         Assert.HasCount(3, response.Items);
         Assert.IsNotNull(response.Items);
         Assert.AreEqual("ft", response.Units);
         Assert.AreEqual(parameterCode, response.ParameterCode);
-        Assert.IsTrue(response.MonitoringLocation.Contains(monitoringLocationId));
+        Assert.Contains(monitoringLocationId, response.MonitoringLocation);
         Assert.IsNotNull(response.UrlUsed);
-        Assert.IsTrue(response.UrlUsed.Contains("collections/daily/items"));
+        Assert.Contains("collections/daily/items", response.UrlUsed);
 
         // Verify timestamp was parsed (timeStamp from JSON: "2026-05-30T20:05:34.341299Z")
-        Assert.AreNotEqual(default(DateTime), response.Timestamp);
+        Assert.AreNotEqual(default, response.Timestamp);
         Assert.AreEqual(2026, response.Timestamp.Year);
         Assert.AreEqual(5, response.Timestamp.Month);
         Assert.AreEqual(30, response.Timestamp.Day);
@@ -318,10 +317,9 @@ public class USGSClientTests
 
         // Assert
         Assert.IsNotNull(response);
-        Assert.IsFalse(response.IsSuccess);
+        Assert.AreEqual(USGSErrorKind.Network, response.ErrorKind);
         Assert.IsEmpty(response.Items);
         Assert.IsNotNull(response.ErrorMessage);
-        Assert.AreEqual(USGSErrorKind.Network, response.ErrorKind);
     }
 
     [TestMethod]
@@ -344,10 +342,9 @@ public class USGSClientTests
 
         // Assert
         Assert.IsNotNull(response);
-        Assert.IsFalse(response.IsSuccess);
+        Assert.AreEqual(USGSErrorKind.ParseError, response.ErrorKind);
         Assert.IsEmpty(response.Items);
         Assert.IsNotNull(response.ErrorMessage);
-        Assert.AreEqual(USGSErrorKind.ParseError, response.ErrorKind);
     }
 
     [TestMethod]
@@ -370,9 +367,8 @@ public class USGSClientTests
 
         // Assert
         Assert.IsNotNull(response);
-        Assert.IsFalse(response.IsSuccess);
-        Assert.IsEmpty(response.Items);
         Assert.AreEqual(USGSErrorKind.Unknown, response.ErrorKind);
+        Assert.IsEmpty(response.Items);
         Assert.AreEqual("Some Random Exception", response.ErrorMessage);
     }
 
@@ -396,7 +392,6 @@ public class USGSClientTests
 
         // Assert
         Assert.IsNotNull(response);
-        Assert.IsFalse(response.IsSuccess);
         Assert.IsEmpty(response.Items);
         Assert.AreEqual(USGSErrorKind.NotFound, response.ErrorKind);
     }
@@ -421,7 +416,6 @@ public class USGSClientTests
 
         // Assert
         Assert.IsNotNull(response);
-        Assert.IsFalse(response.IsSuccess);
         Assert.IsEmpty(response.Items);
         Assert.AreEqual(USGSErrorKind.Unauthorized, response.ErrorKind);
     }
@@ -437,9 +431,9 @@ public class USGSClientTests
         var limit = 12345;
 
         var apiKey = "some-api_key";
-        var handler = new MockHttpMessageHandler() 
-        { 
-            AlwaysThrows = new HttpRequestException("Network unreachable") 
+        var handler = new MockHttpMessageHandler()
+        {
+            AlwaysThrows = new HttpRequestException("Network unreachable")
         };
         using var httpClient = new HttpClient(handler);
         var client = IUSGSClient.Create(apiKey, httpClient);
@@ -449,11 +443,10 @@ public class USGSClientTests
 
         // Assert
         Assert.IsNotNull(response);
-        Assert.IsFalse(response.IsSuccess);
         Assert.IsEmpty(response.Items);
         Assert.AreEqual(USGSErrorKind.Network, response.ErrorKind);
         Assert.IsNotNull(response.ErrorMessage);
-        Assert.IsTrue(response.ErrorMessage.Contains("Network unreachable"));
+        Assert.Contains("Network unreachable", response.ErrorMessage);
     }
 
     public TestContext TestContext { get; set; }    // Set by MSTest 

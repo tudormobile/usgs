@@ -22,7 +22,7 @@ public class IntegationTests
 
         // Assert
         Assert.IsNotNull(result);
-        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual(USGSErrorKind.None, result.ErrorKind);
         Assert.IsNotEmpty(result.Items);
         Assert.AreEqual("ft", result.Units);
     }

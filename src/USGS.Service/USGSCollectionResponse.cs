@@ -6,11 +6,6 @@
 public class USGSCollectionResponse
 {
     /// <summary>
-    /// Gets or sets a value indicating whether the API request was successful.
-    /// </summary>
-    public bool IsSuccess { get; set; }
-
-    /// <summary>
     /// Gets or sets the kind of error that occurred, if any.
     /// </summary>
     public USGSErrorKind ErrorKind { get; set; }

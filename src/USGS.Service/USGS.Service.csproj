@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>Tudormobile.$(MSBuildProjectName)</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

@@ -1,0 +1,12 @@
+@WebApiHost_HostAddress = http://localhost:5087
+
+GET {{WebApiHost_HostAddress}}/weather/usgs/v1/status
+Accept: application/json
+ApiKey: 00000000000000000000000000000000
+
+###
+GET {{WebApiHost_HostAddress}}/weather/usgs/v1/425048073472501/72019/daily?startDate=2024-01-01&endDate=2024-01-31
+Accept: application/json
+ApiKey: 00000000000000000000000000000000
+
+###

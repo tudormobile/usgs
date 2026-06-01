@@ -1,3 +1,7 @@
+# Documentation
+A full source-generated documentation website is not currently provided. This folder contains a collection of notes and documentation files that will eventually form a complete comprehensive site.
+
+## Development Notes
 The USGS monitors groundwater locations in Clifton Park under specific station IDs, such as Sa-1285 (Site ID: 425048073472501) and Sa-1100 (Site ID: 425242073473201). You can target individual sites or fetch all groundwater sites in Saratoga County using the API endpoints detailed below.
 
 curl -G "https://api.waterdata.usgs.gov/ogcapi/v0/collections/field-measurements/items" --data-urlencode "monitoring_location_id=USGS-425048073472501" --data-urlencode "datetime=2025-01-01/2026-05-29"   --data-urlencode "limit=1000"
