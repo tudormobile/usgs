@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/Samples/">
-    <File Path="../samples/SimpleConsoleApp/SimpleConsoleApp.csproj" />
+    <Project Path="../samples/SimpleConsoleApp/SimpleConsoleApp.csproj" />
     <Project Path="../samples/WebApiHost/WebApiHost.csproj" />
   </Folder>
   <Project Path="USGS.Service.Tests/USGS.Service.Tests.csproj" Id="8408f6b1-3b5c-437d-8494-cb6771cbd6d9" />

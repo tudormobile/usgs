@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Tudormobile.USGS.Service;
 
 namespace USGS.Service.Tests;
 
@@ -86,5 +85,21 @@ public class ServiceCollectionExtensionsTests
         Assert.IsTrue(httpClient.DefaultRequestHeaders.Contains("X-Request-Id"));
         Assert.AreEqual("custom-value", httpClient.DefaultRequestHeaders.GetValues("X-Custom-Header").First());
         Assert.AreEqual("12345", httpClient.DefaultRequestHeaders.GetValues("X-Request-Id").First());
+    }
+
+    [TestMethod]
+    public void AddUSGSClient_WithBaseAddress_ShouldConfigureHttpClient()
+    {
+        var baseAddress = "https://test.example.com/";
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddUSGSClient(BuildConfig(baseAddress: baseAddress));
+
+        using var provider = services.BuildServiceProvider();
+        var factory = provider.GetRequiredService<IHttpClientFactory>();
+        var httpClient = factory.CreateClient(nameof(IUSGSClient));
+
+        // Verify base address is set
+        Assert.AreEqual(baseAddress, httpClient.BaseAddress?.ToString());
     }
 }

@@ -53,7 +53,6 @@ internal class USGSClient : IUSGSClient
             // Check HTTP status code
             if (!response.IsSuccessStatusCode)
             {
-                result.IsSuccess = false;
                 result.ErrorMessage = $"HTTP {(int)response.StatusCode}: {response.ReasonPhrase}";
 
                 result.ErrorKind = response.StatusCode switch
@@ -68,9 +67,8 @@ internal class USGSClient : IUSGSClient
             }
 
             using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            var doc = await GeoJSONDocument.ParseAsync(stream);
+            var doc = await GeoJSONDocument.ParseAsync(stream, cancellationToken);
 
-            result.IsSuccess = true;
             if (DateTime.TryParse(doc.Objects["timeStamp"]?.ToString(), out var timestamp))
             {
                 result.Timestamp = timestamp;
@@ -82,7 +80,7 @@ internal class USGSClient : IUSGSClient
             }
             foreach (var feature in doc.FeatureCollection.Features)
             {
-                double.TryParse(feature.Properties["value"].GetString(), out var v);
+                _ = double.TryParse(feature.Properties["value"].GetString(), out var v);
                 feature.Properties["time"].TryGetDateTime(out var t);
                 result.Items.Add(new USGSItem
                 {
@@ -94,21 +92,18 @@ internal class USGSClient : IUSGSClient
         catch (HttpRequestException ex)
         {
             result.ErrorMessage = ex.Message;
-            result.IsSuccess = false;
             result.ErrorKind = USGSErrorKind.Network;
             _logger.LogError(ex, "Network error occurred while calling USGS API.");
         }
         catch (JsonException ex)
         {
             result.ErrorMessage = ex.Message;
-            result.IsSuccess = false;
             result.ErrorKind = USGSErrorKind.ParseError;
             _logger.LogError(ex, "Error parsing JSON response from USGS API.");
         }
         catch (Exception ex)
         {
             result.ErrorMessage = ex.Message;
-            result.IsSuccess = false;
             result.ErrorKind = USGSErrorKind.Unknown;
             _logger.LogError(ex, "Unexpected error occurred while calling USGS API.");
         }

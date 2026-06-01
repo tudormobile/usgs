@@ -1,5 +1,9 @@
 ﻿namespace Tudormobile.USGS.Service;
 
+/// <summary>
+/// Represents the result of an API call, containing a success flag and optional data.
+/// </summary>
+/// <typeparam name="T"></typeparam>
 public sealed record ApiResponse<T>
 {
     /// <summary>

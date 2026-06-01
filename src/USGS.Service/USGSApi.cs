@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 namespace Tudormobile.USGS.Service;
 
 /// <summary>
-/// Represents the USGS API service, which can be used to handle incoming requests to USGS endpoints.
+/// Represents the USGS API service, which can be used to proxy incoming requests to USGS endpoints.
 /// </summary>
 public class USGSApi
 {
@@ -49,7 +49,7 @@ public class USGSApi
         => HandleApiRequest(context, apiKey, nameof(GetDailyValues), async () =>
         {
             var dailyItems = await _usgsClient.GetDailyItemsAsync(location, USGSParameterCode.Custom(parameter), startDate, endDate);
-            return Results.Ok(dailyItems);
+            return dailyItems.ErrorKind == USGSErrorKind.None ? Results.Ok(ApiResponse.Success(dailyItems)) : Results.Ok(ApiResponse.Failure(dailyItems));
         });
 
     private async Task<IResult> HandleApiRequest(HttpContext context, string apiKey, string callerName, Func<Task<IResult>> onAuthorized)
