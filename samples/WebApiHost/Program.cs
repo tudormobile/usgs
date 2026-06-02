@@ -10,6 +10,7 @@ public class Program
 
         // Add services to the container.
         builder.Services.AddUSGSClient(builder.Configuration);
+        builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Warning);
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
