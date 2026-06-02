@@ -9,7 +9,7 @@ using System.Net.Http.Headers;
 namespace Tudormobile.USGS.Service;
 
 /// <summary>Extension methods for registering USGS services with dependency injection.</summary>
-public static class ServiceCollectionExtensions
+public static class USGSServiceExtensions
 {
     private readonly static string API_KEY_NAME = "x-api-key";
 
@@ -44,7 +44,7 @@ public static class ServiceCollectionExtensions
         app.MapGet($"{serviceRoot}{prefix}/{{location}}/{{parameter}}/daily", (HttpContext context, [FromHeader(Name = "ApiKey")] string? apiKey, string location, string parameter, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
             => api.GetDailyValues(context, apiKey ?? string.Empty, location, parameter, startDate, endDate));
 
-        app.Logger.LogInformation("USGSService, Running, {Prefix}", prefix);
+        app.Logger.LogInformation("USGSService, Running, {Prefix}", serviceRoot + prefix);
         return app;
     }
 
